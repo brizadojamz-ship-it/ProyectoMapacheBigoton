@@ -1,11 +1,61 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>Agenda | El Mapache Bigotón</title>
+    <link rel="stylesheet" href="css/styles.css">
 </head>
+
 <body>
-    
+    <div class="dashboard-layout">
+        <aside class="sidebar">
+            <div class="logo">
+                <h2>El Mapache</h2>
+                <span>BIGOTÓN</span>
+            </div>
+            <nav class="menu">
+                <ul>
+                    <li class="active"><a href="#">Inicio</a></li>
+                    <li><a href="#">Citas</a></li>
+                    <li><a href="#">Clientes</a></li>
+                    <li><a href="#">Barberos</a></li>
+                    <li><a href="#">Servicios</a></li>
+                </ul>
+            </nav>
+            <div class="user-profile">
+                <div class="avatar">EM</div>
+                <div class="info">
+                    <p>Administrador</p>
+                </div>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <header class="top-header">
+                <div class="title-section">
+                    <span class="subtitle">RESUMEN DIARIO</span>
+                    <h1>Agenda de hoy</h1>
+                    <p class="date">Viernes, 25 De Septiembre De 2026</p>
+                </div>
+                <div class="actions-section">
+                    <button class="btn-primary">+ Nueva cita</button>
+                </div>
+            </header>
+
+            <section class="stats-cards">
+                <div class="card">Citas de hoy</div>
+                <div class="card">Ingresos estimados</div>
+                <div class="card">Próxima cita</div>
+            </section>
+
+            <section class="appointments-list">
+                <h2>Citas programadas</h2>
+            </section>
+        </main>
+
+    </div>
 </body>
+
 </html>
