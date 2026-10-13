@@ -1,4 +1,6 @@
-from fastapi import FastAPI
+from http.client import HTTPException
+
+from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 
 app = FastAPI()
@@ -69,3 +71,62 @@ def eliminar_cliente(id: int):
     return {
         "mensaje": "Error. Cliente no encontrado"
     }
+
+
+# MÓDULO DE BARBEROS
+
+barberos = [
+    {"id": 1, "nombre": "Diego Ramírez"},
+    {"id": 2, "nombre": "Armando Jiménez"},
+    {"id": 3, "nombre": "Joaquín Torres"}
+]
+
+
+# Modelo de datos para barberos
+class Barbero(BaseModel):
+    nombre: str
+
+
+# Consultar los barberos
+@app.get("/barberos")
+def obtener_babrberos():
+    return barberos
+
+
+# Registrar un nuevo barbero
+@app.post("/babrberos", status_code=201)
+def registrar_barbero(barbero: Barbero):
+    nuevo_barbero = {
+        "id": max((b["id"] for b in barberos), default=0) + 1,
+        "nombre": barbero.nombre
+    }
+
+    barberos.append(nuevo_barbero)
+    return nuevo_barbero
+
+
+# Actualizar un barbero
+@app.put("/barberos/{id}")
+def actualizar_barbero(id: int, barbero: Barbero):
+    for b in barberos:
+        if b["id"] == id:
+            b["nombre"] = barbero.nombre
+
+            return {
+                "mensaje": "Barbero actualizado correctamente",
+                "barbero": b
+            }
+
+    raise HTTPException(status_code=404, detail="Barbero no encontrado")
+
+
+# Eliminar un barbero
+@app.delete("/barberos/{id}")
+def eliminar_barbero(id: int):
+    for b in barberos:
+        if b["id"] == id:
+            barberos.remove(b)
+
+        return {"mensaje": "Barbero eliminado correctamente"}
+
+    raise HTTPException(status_code=404, detail="Barbero no encontrado")
