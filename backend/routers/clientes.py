@@ -1,11 +1,13 @@
-from fastapi import APIRouter, HTTPException
+
+from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
-from backend.datos import clientes
+from sqlalchemy.orm import Session
+
+from backend.database import obtener_db
+from backend.database import ClienteDB
 
 router = APIRouter(tags=["Clientes"])
 
-# MÓDULO DE CLIENTES
-# =====================================
 
 class Cliente(BaseModel):
     nombre: str
@@ -14,53 +16,71 @@ class Cliente(BaseModel):
 
 # Consultar clientes
 @router.get("/clientes")
-def obtener_clientes():
-    return clientes
+def obtener_clientes(db: Session = Depends(obtener_db)):
+    return db.query(ClienteDB).all()
 
 
 # Registrar cliente
 @router.post("/clientes", status_code=201)
-def registrar_cliente(cliente: Cliente):
-    nuevo_cliente = {
-        "id": max((c["id"] for c in clientes), default=0) + 1,
-        **cliente.model_dump()
-    }
+def registrar_cliente(
+    cliente: Cliente,
+    db: Session = Depends(obtener_db)
+):
+    nuevo_cliente = ClienteDB(**cliente.model_dump())
 
-    clientes.append(nuevo_cliente)
+    db.add(nuevo_cliente)
+    db.commit()
+    db.refresh(nuevo_cliente)
+
     return nuevo_cliente
 
 
 # Actualizar cliente
 @router.put("/clientes/{id}")
-def actualizar_cliente(id: int, cliente: Cliente):
-    for c in clientes:
-        if c["id"] == id:
-            c.update(cliente.model_dump())
+def actualizar_cliente(
+    id: int,
+    cliente: Cliente,
+    db: Session = Depends(obtener_db)
+):
+    cliente_db = db.query(ClienteDB).filter(
+        ClienteDB.id == id
+    ).first()
 
-            return {
-                "mensaje": "Cliente actualizado correctamente",
-                "cliente": c
-            }
+    if not cliente_db:
+        raise HTTPException(
+            status_code=404,
+            detail="Cliente no encontrado"
+        )
 
-    raise HTTPException(
-        status_code=404,
-        detail="Cliente no encontrado"
-    )
+    cliente_db.nombre = cliente.nombre
+    cliente_db.telefono = cliente.telefono
+
+    db.commit()
+    db.refresh(cliente_db)
+
+    return {
+        "mensaje": "Cliente actualizado correctamente",
+        "cliente": cliente_db
+    }
 
 
 # Eliminar cliente
 @router.delete("/clientes/{id}")
-def eliminar_cliente(id: int):
-    for c in clientes:
-        if c["id"] == id:
-            clientes.remove(c)
+def eliminar_cliente(
+    id: int,
+    db: Session = Depends(obtener_db)
+):
+    cliente_db = db.query(ClienteDB).filter(
+        ClienteDB.id == id
+    ).first()
 
-            return {"mensaje": "Cliente eliminado correctamente"}
+    if not cliente_db:
+        raise HTTPException(
+            status_code=404,
+            detail="Cliente no encontrado"
+        )
 
-    raise HTTPException(
-        status_code=404,
-        detail="Cliente no encontrado"
-    )
+    db.delete(cliente_db)
+    db.commit()
 
-
-# =====================================
+    return {"mensaje": "Cliente eliminado correctamente"}
