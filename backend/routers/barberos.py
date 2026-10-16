@@ -5,8 +5,6 @@ from backend.datos import barberos
 router = APIRouter(tags=["Barberos"])
 
 # MÓDULO DE BARBEROS
-# =====================================
-
 class Barbero(BaseModel):
     nombre: str
 
@@ -60,6 +58,3 @@ def eliminar_barbero(id: int):
         status_code=404,
         detail="Barbero no encontrado"
     )
-
-
-# =====================================

@@ -10,11 +10,13 @@
 
 <body>
     <div class="dashboard-layout">
+
         <aside class="sidebar">
             <div class="logo">
                 <h2>El Mapache</h2>
                 <span>BIGOTÓN</span>
             </div>
+
             <nav class="menu">
                 <ul>
                     <li><a href="index.html">Inicio</a></li>
@@ -24,6 +26,7 @@
                     <li><a href="servicios.html">Servicios</a></li>
                 </ul>
             </nav>
+
             <div class="user-profile">
                 <div class="avatar">EM</div>
                 <div class="info">
@@ -33,64 +36,43 @@
         </aside>
 
         <main class="main-content">
+
             <header class="top-header">
                 <div class="title-section">
                     <span class="subtitle">EQUIPO</span>
                     <h1>Barberos</h1>
-                    <p class="card-title" style="margin-top: 5px;">Administra la información y mantén tus registros siempre actualizados.</p>
+                    <p class="card-title" style="margin-top: 5px;">Administra la información y mantén tus registros
+                        siempre actualizados.</p>
                 </div>
                 <div class="actions-section">
-                    <button class="btn-primary">+ Nuevo barbero</button>
+                    <button class="btn-primary" onclick="abrirModalBarbero()">+ Nuevo barbero</button>
                 </div>
             </header>
 
             <section class="appointments-list" style="margin-top: 30px;">
-                <div class="card" style="margin-bottom: 15px; justify-content: space-between;">
-                    <div style="display: flex; align-items: center; gap: 15px;">
-                        <div class="icon-box" style="background-color: var(--color-fondo-oscuro); color: white;">DR</div>
-                        <div>
-                            <p class="card-title">Barbero activo</p>
-                            <h3>Diego Ramírez</h3>
-                        </div>
-                    </div>
-                    <div>
-                        <p class="card-title">Especialidad</p>
-                        <span>Corte clásico y barba</span>
-                    </div>
-                    <div>
-                        <p class="card-title">Citas hoy</p>
-                        <span>6 citas</span>
-                    </div>
-                    <div>
-                        <button class="btn-primary" style="padding: 8px 16px;">Editar</button>
-                        <button class="btn-primary" style="padding: 8px 16px; background-color: #8e8e8e;">Eliminar</button>
-                    </div>
-                </div>
-
-                <div class="card" style="margin-bottom: 15px; justify-content: space-between;">
-                    <div style="display: flex; align-items: center; gap: 15px;">
-                        <div class="icon-box" style="background-color: var(--color-fondo-oscuro); color: white;">AL</div>
-                        <div>
-                            <p class="card-title">Barbero activo</p>
-                            <h3>Andrés Lozano</h3>
-                        </div>
-                    </div>
-                    <div>
-                        <p class="card-title">Especialidad</p>
-                        <span>Estilo moderno y diseño</span>
-                    </div>
-                    <div>
-                        <p class="card-title">Citas hoy</p>
-                        <span>5 citas</span>
-                    </div>
-                    <div>
-                        <button class="btn-primary" style="padding: 8px 16px;">Editar</button>
-                        <button class="btn-primary" style="padding: 8px 16px; background-color: #8e8e8e;">Eliminar</button>
-                    </div>
-                </div>
+                <div id="lista-barberos"></div>
             </section>
+
         </main>
     </div>
+
+    <div id="modal-barbero" class="modal" style="display: none;">
+        <div class="modal-content">
+            <span class="close-btn" onclick="cerrarModalBarbero()">&times;</span>
+            <h2 style="margin-bottom: 20px;">Agregar Nuevo Barbero</h2>
+
+            <form id="form-barbero" onsubmit="guardarBarbero(event)">
+                <div class="form-group">
+                    <label>Nombre del Barbero:</label>
+                    <input type="text" id="barbero-nombre" required placeholder="Ej. Juan Pérez">
+                </div>
+                <button type="submit" class="btn-primary" style="width: 100%; margin-top: 15px; padding: 12px;">Guardar
+                    Barbero</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="JavaScript/main.js"></script>
 </body>
 
 </html>
