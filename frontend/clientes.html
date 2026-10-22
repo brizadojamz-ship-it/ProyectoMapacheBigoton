@@ -10,11 +10,13 @@
 
 <body>
     <div class="dashboard-layout">
+
         <aside class="sidebar">
             <div class="logo">
                 <h2>El Mapache</h2>
                 <span>BIGOTÓN</span>
             </div>
+
             <nav class="menu">
                 <ul>
                     <li><a href="index.html">Inicio</a></li>
@@ -24,6 +26,7 @@
                     <li><a href="servicios.html">Servicios</a></li>
                 </ul>
             </nav>
+
             <div class="user-profile">
                 <div class="avatar">EM</div>
                 <div class="info">
@@ -41,59 +44,37 @@
                         siempre actualizados.</p>
                 </div>
                 <div class="actions-section">
-                    <button class="btn-primary">+ Nuevo cliente</button>
+                    <button class="btn-primary" onclick="abrirModalCliente()">+ Nuevo cliente</button>
                 </div>
             </header>
 
             <section class="appointments-list" style="margin-top: 30px;">
-                <div class="card" style="margin-bottom: 15px; justify-content: space-between;">
-                    <div style="display: flex; align-items: center; gap: 15px;">
-                        <div class="icon-box">SC</div>
-                        <div>
-                            <p class="card-title">Cliente</p>
-                            <h3>Santiago Cortés</h3>
-                        </div>
-                    </div>
-                    <div>
-                        <p class="card-title">Teléfono</p>
-                        <span>55 2480 1932</span>
-                    </div>
-                    <div>
-                        <p class="card-title">Visitas</p>
-                        <span>8 visitas</span>
-                    </div>
-                    <div>
-                        <button class="btn-primary" style="padding: 8px 16px;">Editar</button>
-                        <button class="btn-primary"
-                            style="padding: 8px 16px; background-color: #8e8e8e;">Eliminar</button>
-                    </div>
-                </div>
-
-                <div class="card" style="margin-bottom: 15px; justify-content: space-between;">
-                    <div style="display: flex; align-items: center; gap: 15px;">
-                        <div class="icon-box">MV</div>
-                        <div>
-                            <p class="card-title">Cliente</p>
-                            <h3>Mateo Vargas</h3>
-                        </div>
-                    </div>
-                    <div>
-                        <p class="card-title">Teléfono</p>
-                        <span>55 8316 0495</span>
-                    </div>
-                    <div>
-                        <p class="card-title">Visitas</p>
-                        <span>5 visitas</span>
-                    </div>
-                    <div>
-                        <button class="btn-primary" style="padding: 8px 16px;">Editar</button>
-                        <button class="btn-primary"
-                            style="padding: 8px 16px; background-color: #8e8e8e;">Eliminar</button>
-                    </div>
-                </div>
+                <div id="lista-clientes"></div>
             </section>
         </main>
     </div>
+
+    <div id="modal-cliente" class="modal" style="display: none;">
+        <div class="modal-content">
+            <span class="close-btn" onclick="cerrarModalCliente()">&times;</span>
+            <h2 style="margin-bottom: 20px;">Agregar Nuevo Cliente</h2>
+
+            <form id="form-cliente" onsubmit="guardarCliente(event)">
+                <div class="form-group">
+                    <label>Nombre del Cliente:</label>
+                    <input type="text" id="cliente-nombre" required placeholder="Ej. Diana Lozano">
+                </div>
+                <div class="form-group">
+                    <label>Teléfono:</label>
+                    <input type="text" id="cliente-telefono" required placeholder="Ej. 2311501210">
+                </div>
+                <button type="submit" class="btn-primary" style="width: 100%; margin-top: 15px; padding: 12px;">Guardar
+                    Cliente</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="JavaScript/main.js"></script>
 </body>
 
 </html>
