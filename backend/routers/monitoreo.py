@@ -1,90 +1,102 @@
 from datetime import date
-from fastapi import APIRouter
-from backend.datos import citas, clientes, barberos, servicios
+
+from fastapi import APIRouter, Depends
+from sqlalchemy.orm import Session
+
+# Importaciones corregidas
+from database.conexion import obtener_db
+from database.modelos import (
+    ClienteDB,
+    BarberoDB,
+    ServicioDB,
+    CitaDB
+)
 
 router = APIRouter(tags=["Agenda y monitoreo"])
+
 
 # AGENDA DEL DUEÑO
 # =====================================
 
 @router.get("/agenda/{fecha}")
-def consultar_agenda(fecha: date):
+def consultar_agenda(
+    fecha: date,
+    db: Session = Depends(obtener_db)
+):
 
     agenda = []
 
-    for cita in citas:
+    # Consultar las citas de la fecha solicitada
+    citas_dia = db.query(CitaDB).filter(
+        CitaDB.fecha == fecha
+    ).all()
 
-        if cita["fecha"] == fecha.isoformat():
+    for cita in citas_dia:
 
-            cliente = next(
-                (c for c in clientes if c["id"] == cita["cliente_id"]),
-                None
-            )
+        cliente = db.get(ClienteDB, cita.cliente_id)
+        barbero = db.get(BarberoDB, cita.barbero_id)
+        servicio = db.get(ServicioDB, cita.servicio_id)
 
-            barbero = next(
-                (b for b in barberos if b["id"] == cita["barbero_id"]),
-                None
-            )
+        agenda.append({
+            "id": cita.id,
+            "hora": cita.hora.isoformat(),
+            "cliente": cliente.nombre if cliente else "No disponible",
+            "barbero": barbero.nombre if barbero else "No disponible",
+            "servicio": servicio.nombre if servicio else "No disponible",
+            "precio": float(servicio.precio) if servicio else 0
+        })
 
-            servicio = next(
-                (s for s in servicios if s["id"] == cita["servicio_id"]),
-                None
-            )
-
-            agenda.append({
-                "id": cita["id"],
-                "hora": cita["hora"],
-                "cliente": cliente["nombre"] if cliente else "No disponible",
-                "barbero": barbero["nombre"] if barbero else "No disponible",
-                "servicio": servicio["nombre"] if servicio else "No disponible",
-                "precio": servicio["precio"] if servicio else 0
-            })
-
+    # Ordenar por hora
     agenda.sort(key=lambda c: c["hora"])
 
     return agenda
+
 
 # PANEL DE MONITOREO
 # =====================================
 
 @router.get("/resumen/{fecha}")
-def obtener_resumen(fecha: date):
+def obtener_resumen(
+    fecha: date,
+    db: Session = Depends(obtener_db)
+):
 
-    # Buscar las citas del día
-    citas_dia = [
-        c for c in citas
-        if c["fecha"] == fecha.isoformat()
-    ]
+    # Consultar citas del día
+    citas_dia = db.query(CitaDB).filter(
+        CitaDB.fecha == fecha
+    ).all()
 
-    # Calcular los ingresos estimados
+    # Calcular ingresos estimados
     ingresos = 0
 
     for cita in citas_dia:
-        servicio = next(
-            (s for s in servicios if s["id"] == cita["servicio_id"]),
-            None
-        )
+
+        servicio = db.get(ServicioDB, cita.servicio_id)
 
         if servicio:
-            ingresos += servicio["precio"]
+            ingresos += servicio.precio
+
+    # Consultar todos los barberos
+    barberos = db.query(BarberoDB).all()
 
     # Contar citas por barbero
     citas_por_barbero = []
 
     for barbero in barberos:
+
         cantidad = sum(
-            1 for c in citas_dia
-            if c["barbero_id"] == barbero["id"]
+            1 for cita in citas_dia
+            if cita.barbero_id == barbero.id
         )
 
         citas_por_barbero.append({
-            "barbero": barbero["nombre"],
+            "barbero": barbero.nombre,
             "total_citas": cantidad
         })
 
     return {
         "fecha": fecha.isoformat(),
         "total_citas": len(citas_dia),
-        "ingresos_estimados": ingresos,
+        "ingresos_estimados": float(ingresos),
         "citas_por_barbero": citas_por_barbero
     }

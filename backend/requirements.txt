@@ -1,2 +1,6 @@
 
 fastapi[standard]
+
+sqlalchemy
+pymysql
+python-dotenv

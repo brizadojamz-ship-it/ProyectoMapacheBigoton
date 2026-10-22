@@ -1,13 +1,23 @@
 from datetime import date, time, datetime, timedelta
-from fastapi import APIRouter, HTTPException
+
+from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
-from backend.datos import clientes, barberos, servicios, citas
+from sqlalchemy.orm import Session
+from sqlalchemy.exc import IntegrityError
+
+# Importaciones corregidas
+from database.conexion import obtener_db
+from database.modelos import (
+    ClienteDB,
+    BarberoDB,
+    ServicioDB,
+    CitaDB
+)
 
 router = APIRouter(tags=["Citas"])
 
-# MÓDULO DE CITAS
-# =====================================
 
+# MODELO DE ENTRADA
 class Cita(BaseModel):
     cliente_id: int
     barbero_id: int
@@ -16,35 +26,35 @@ class Cita(BaseModel):
     hora: time
 
 
-# Consultar todas las citas
+# CONSULTAR TODAS LAS CITAS
 @router.get("/citas")
-def obtener_citas():
-    return citas
+def obtener_citas(db: Session = Depends(obtener_db)):
+    return db.query(CitaDB).all()
 
 
-# Registrar una cita
-@router.post("/citas", status_code=201)
-def registrar_cita(cita: Cita):
+# VALIDAR DATOS Y DISPONIBILIDAD
+def validar_cita(cita: Cita, db: Session, id_ignorar=None):
 
-    # Verificar que el cliente exista
-    if not any(c["id"] == cita.cliente_id for c in clientes):
+    # Verificar cliente
+    cliente = db.get(ClienteDB, cita.cliente_id)
+
+    if cliente is None:
         raise HTTPException(
             status_code=404,
             detail="Cliente no encontrado"
         )
 
-    # Verificar que el barbero exista
-    if not any(b["id"] == cita.barbero_id for b in barberos):
+    # Verificar barbero
+    barbero = db.get(BarberoDB, cita.barbero_id)
+
+    if barbero is None:
         raise HTTPException(
             status_code=404,
             detail="Barbero no encontrado"
         )
 
-    # Buscar el servicio solicitado
-    servicio = next(
-        (s for s in servicios if s["id"] == cita.servicio_id),
-        None
-    )
+    # Verificar servicio
+    servicio = db.get(ServicioDB, cita.servicio_id)
 
     if servicio is None:
         raise HTTPException(
@@ -52,87 +62,109 @@ def registrar_cita(cita: Cita):
             detail="Servicio no encontrado"
         )
 
-    # Calcular el horario de la nueva cita
+    # Calcular duración de la nueva cita
     inicio_nuevo = datetime.combine(cita.fecha, cita.hora)
-
     fin_nuevo = inicio_nuevo + timedelta(
-        minutes=servicio["duracion"]
+        minutes=servicio.duracion
     )
 
-    # Revisar si el barbero tiene otra cita
-    for existente in citas:
+    # Consultar citas del mismo barbero
+    citas_existentes = db.query(CitaDB).filter(
+        CitaDB.barbero_id == cita.barbero_id
+    ).all()
 
-        if existente["barbero_id"] == cita.barbero_id:
+    for existente in citas_existentes:
 
-            inicio_existente = datetime.combine(
-                date.fromisoformat(existente["fecha"]),
-                time.fromisoformat(existente["hora"])
+        # Ignorar la cita que se está actualizando
+        if existente.id == id_ignorar:
+            continue
+
+        inicio_existente = datetime.combine(
+            existente.fecha,
+            existente.hora
+        )
+
+        servicio_existente = db.get(
+            ServicioDB,
+            existente.servicio_id
+        )
+
+        if servicio_existente is None:
+            raise HTTPException(
+                status_code=409,
+                detail="Una cita existente tiene un servicio no disponible"
             )
 
-            servicio_existente = next(
-                (
-                    s for s in servicios
-                    if s["id"] == existente["servicio_id"]
-                ),
-                None
+        fin_existente = inicio_existente + timedelta(
+            minutes=servicio_existente.duracion
+        )
+
+        # Evitar horarios empalmados
+        if inicio_nuevo < fin_existente and fin_nuevo > inicio_existente:
+            raise HTTPException(
+                status_code=409,
+                detail="El barbero ya tiene una cita en ese horario"
             )
 
-            if servicio_existente is None:
-                raise HTTPException(
-                    status_code=409,
-                    detail="Una cita existente tiene un servicio no disponible"
-                )
 
-            fin_existente = inicio_existente + timedelta(
-                minutes=servicio_existente["duracion"]
-            )
+# REGISTRAR CITA
+@router.post("/citas", status_code=201)
+def registrar_cita(
+    cita: Cita,
+    db: Session = Depends(obtener_db)
+):
 
-            # Verificar si los horarios se empalman
-            if inicio_nuevo < fin_existente and fin_nuevo > inicio_existente:
-                raise HTTPException(
-                    status_code=409,
-                    detail="El barbero ya tiene una cita en ese horario"
-                )
+    validar_cita(cita, db)
 
-    # Guardar la nueva cita
-    nueva_cita = {
-        "id": max((c["id"] for c in citas), default=0) + 1,
-        **cita.model_dump(mode="json")
-    }
+    nueva_cita = CitaDB(**cita.model_dump())
 
-    citas.append(nueva_cita)
+    db.add(nueva_cita)
+
+    try:
+        db.commit()
+        db.refresh(nueva_cita)
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(
+            status_code=409,
+            detail="No se pudo registrar la cita"
+        )
 
     return nueva_cita
 
 
-#Eliminar
+# ELIMINAR CITA
 @router.delete("/citas/{id}")
-def eliminar_cita(id: int):
+def eliminar_cita(
+    id: int,
+    db: Session = Depends(obtener_db)
+):
 
-    for c in citas:
-        if c["id"] == id:
-            citas.remove(c)
+    cita_db = db.get(CitaDB, id)
 
-            return {
-                "mensaje": "Cita eliminada correctamente"
-            }
+    if cita_db is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Cita no encontrada"
+        )
 
-    raise HTTPException(
-        status_code=404,
-        detail="Cita no encontrada"
-    )
+    db.delete(cita_db)
+    db.commit()
 
-# ACTUALIZAR CITAS
+    return {
+        "mensaje": "Cita eliminada correctamente"
+    }
 
 
+# ACTUALIZAR CITA
 @router.put("/citas/{id}")
-def actualizar_cita(id: int, cita: Cita):
+def actualizar_cita(
+    id: int,
+    cita: Cita,
+    db: Session = Depends(obtener_db)
+):
 
-    # Buscar la cita que queremos modificar
-    cita_actual = next(
-        (c for c in citas if c["id"] == id),
-        None
-    )
+    cita_actual = db.get(CitaDB, id)
 
     if cita_actual is None:
         raise HTTPException(
@@ -140,79 +172,23 @@ def actualizar_cita(id: int, cita: Cita):
             detail="Cita no encontrada"
         )
 
-    # Comprobar que el cliente exista
-    if not any(c["id"] == cita.cliente_id for c in clientes):
+    validar_cita(cita, db, id_ignorar=id)
+
+    cita_actual.cliente_id = cita.cliente_id
+    cita_actual.barbero_id = cita.barbero_id
+    cita_actual.servicio_id = cita.servicio_id
+    cita_actual.fecha = cita.fecha
+    cita_actual.hora = cita.hora
+
+    try:
+        db.commit()
+        db.refresh(cita_actual)
+    except IntegrityError:
+        db.rollback()
         raise HTTPException(
-            status_code=404,
-            detail="Cliente no encontrado"
+            status_code=409,
+            detail="No se pudo actualizar la cita"
         )
-
-    # Comprobar que el barbero exista
-    if not any(b["id"] == cita.barbero_id for b in barberos):
-        raise HTTPException(
-            status_code=404,
-            detail="Barbero no encontrado"
-        )
-
-    # Buscar el servicio
-    servicio = next(
-        (s for s in servicios if s["id"] == cita.servicio_id),
-        None
-    )
-
-    if servicio is None:
-        raise HTTPException(
-            status_code=404,
-            detail="Servicio no encontrado"
-        )
-
-    # Calcular inicio y fin del nuevo horario
-    inicio_nuevo = datetime.combine(cita.fecha, cita.hora)
-    fin_nuevo = inicio_nuevo + timedelta(
-        minutes=servicio["duracion"]
-    )
-
-    # Revisar otras citas del mismo barbero
-    for existente in citas:
-
-        # Ignorar la cita que estamos modificando
-        if existente["id"] == id:
-            continue
-
-        if existente["barbero_id"] == cita.barbero_id:
-
-            inicio_existente = datetime.combine(
-                date.fromisoformat(existente["fecha"]),
-                time.fromisoformat(existente["hora"])
-            )
-
-            servicio_existente = next(
-                (
-                    s for s in servicios
-                    if s["id"] == existente["servicio_id"]
-                ),
-                None
-            )
-
-            if servicio_existente is None:
-                raise HTTPException(
-                    status_code=409,
-                    detail="Una cita existente tiene un servicio no disponible"
-                )
-
-            fin_existente = inicio_existente + timedelta(
-                minutes=servicio_existente["duracion"]
-            )
-
-            # Comprobar empalmes
-            if inicio_nuevo < fin_existente and fin_nuevo > inicio_existente:
-                raise HTTPException(
-                    status_code=409,
-                    detail="El barbero ya tiene una cita en ese horario"
-                )
-
-    # Actualizar los datos
-    cita_actual.update(cita.model_dump(mode="json"))
 
     return {
         "mensaje": "Cita actualizada correctamente",
