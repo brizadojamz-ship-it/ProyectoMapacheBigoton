@@ -1,4 +1,3 @@
-
 from datetime import date, time, datetime, timedelta
 
 from fastapi import APIRouter, HTTPException, Depends
@@ -6,8 +5,9 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 
-from backend.database import obtener_db
-from backend.database import (
+# Importaciones corregidas
+from database.conexion import obtener_db
+from database.modelos import (
     ClienteDB,
     BarberoDB,
     ServicioDB,

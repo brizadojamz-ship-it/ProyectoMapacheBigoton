@@ -1,11 +1,11 @@
-
 from datetime import date
 
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
-from backend.database import obtener_db
-from backend.database import (
+# Importaciones corregidas
+from database.conexion import obtener_db
+from database.modelos import (
     ClienteDB,
     BarberoDB,
     ServicioDB,

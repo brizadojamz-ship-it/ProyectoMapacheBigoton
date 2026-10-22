@@ -4,8 +4,8 @@ from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 
-from backend.database import obtener_db
-from backend.database import ServicioDB
+from database.conexion import obtener_db
+from database.modelos import ServicioDB
 
 router = APIRouter(tags=["Servicios"])
 

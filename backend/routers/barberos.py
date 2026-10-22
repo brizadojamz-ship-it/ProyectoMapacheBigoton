@@ -4,8 +4,8 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 
-from backend.database import obtener_db
-from backend.database import BarberoDB
+from database.conexion import obtener_db
+from database.modelos import BarberoDB
 
 router = APIRouter(tags=["Barberos"])
 

@@ -1,19 +1,15 @@
-
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from backend.routers import clientes, barberos, servicios, citas, monitoreo
+
+# Importación directa desde routers (evita el error 'No module named backend')
+from routers import clientes, barberos, servicios, citas, monitoreo
 
 app = FastAPI(title="El Mapache Bigotón")
 
-# Configuración de CORS para conectar con el frontend
+# Configuración de CORS adaptada para tu frontend en Live Server/HTML local
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173",
-        "http://127.0.0.1:5173",
-        "http://localhost:3000",
-        "http://127.0.0.1:3000",
-    ],
+    allow_origins=["*"], 
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
