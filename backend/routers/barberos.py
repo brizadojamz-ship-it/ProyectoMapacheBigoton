@@ -6,12 +6,14 @@ from sqlalchemy.exc import IntegrityError
 
 from database.conexion import obtener_db
 from database.modelos import BarberoDB
+from typing import Optional
 
 router = APIRouter(tags=["Barberos"])
 
 
 class Barbero(BaseModel):
     nombre: str
+    sucursal_id: Optional[int] = None
 
 
 # Consultar barberos

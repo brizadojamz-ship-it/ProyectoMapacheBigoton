@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 # Importaciones corregidas (sin "backend.")
 from database.conexion import obtener_db
 from database.modelos import ClienteDB
+from typing import Optional
 
 router = APIRouter(tags=["Clientes"])
 
@@ -12,7 +13,7 @@ router = APIRouter(tags=["Clientes"])
 class Cliente(BaseModel):
     nombre: str
     telefono: str
-
+    sucursal_id: Optional[int] = None
 
 # Consultar clientes
 @router.get("/clientes")
