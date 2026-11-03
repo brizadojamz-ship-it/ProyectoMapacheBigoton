@@ -4,7 +4,8 @@ from pathlib import Path
 from dotenv import load_dotenv
 from sqlalchemy import create_engine, text
 from sqlalchemy.engine import URL
-from sqlalchemy.orm import sessionmaker
+# Agregamos declarative_base aquí:
+from sqlalchemy.orm import sessionmaker, declarative_base 
 
 # Cargar las variables del archivo .env (si existe)
 ruta_env = Path(__file__).resolve().parents[2] / ".env"
@@ -29,6 +30,9 @@ SessionLocal = sessionmaker(
     autoflush=False,
     bind=engine
 )
+
+# --- ESTA ES LA LÍNEA QUE FALTABA ---
+Base = declarative_base()
 
 # Proporcionar una sesión a los endpoints
 def obtener_db():

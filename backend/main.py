@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 # Importación directa desde routers (evita el error 'No module named backend')
-from routers import clientes, barberos, servicios, citas, monitoreo
+from routers import clientes, barberos, servicios, citas, monitoreo, sucursales
 
 app = FastAPI(title="El Mapache Bigotón")
 
@@ -21,6 +21,7 @@ app.include_router(barberos.router)
 app.include_router(servicios.router)
 app.include_router(citas.router)
 app.include_router(monitoreo.router)
+app.include_router(sucursales.router)
 
 
 @app.get("/", tags=["Inicio"])
