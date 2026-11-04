@@ -4,6 +4,8 @@ from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
+from typing import Optional
+from datetime import date, time
 
 # Importaciones corregidas
 from database.conexion import obtener_db
@@ -24,6 +26,7 @@ class Cita(BaseModel):
     servicio_id: int
     fecha: date
     hora: time
+    sucursal_id: Optional[int] = None
 
 
 # CONSULTAR TODAS LAS CITAS
